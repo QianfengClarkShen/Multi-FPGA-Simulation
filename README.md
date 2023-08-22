@@ -12,10 +12,10 @@ This project provides a simple TCP socket interface in SystemVerilog to exchange
  ┗ sim.tcl      - Vivado tcl script for simulation
 
 ## prerequisites:
-    1. GNU make
-    2. Vivado System Suite >= 2017.2
-    3. Python >= 3.6
+1. GNU make
+2. Vivado System Suite >= 2017.2
+3. Python >= 3.6
 
 ## how to run the demo project:
-    **with GUI**: run `make sim_gui`, then `python3 client.py`
-    **without GUI**: run `make sim`, then `python3 client.py`
+**with GUI****: run `make sim_gui`, then `python3 client.py`
+**without GUI**: run `make sim`, then `python3 client.py`
