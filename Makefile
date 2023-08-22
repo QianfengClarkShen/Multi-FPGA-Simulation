@@ -21,5 +21,4 @@ xsim.dir/work.tb/xsimk: dpi.so compile
 	xelab work.tb -sv_lib dpi --debug all
 
 clean:
-	@find . -mindepth 1 -maxdepth 1 -name ".[!.]*" | xargs -n 1 rm -rf
-	@find . -mindepth 1 -maxdepth 1 ! \( -name "Makefile" -o -name "*.sv" -o -name "*.cpp" -o -name "*.py" -o -name "*.svh" -o -name "*.tcl" \) | xargs -n 1 rm -rf
+	@git clean -dfX
