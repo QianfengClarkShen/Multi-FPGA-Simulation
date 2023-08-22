@@ -14,7 +14,8 @@ This project provides a simple TCP socket interface in SystemVerilog to exchange
 ## prerequisites:
     1. GNU make
     2. Vivado System Suite >= 2017.2
+    3. Python >= 3.6
 
 ## how to run the demo project:
-    **with GUI**: make sim_gui
-    **without GUI**: make sim
+    **with GUI**: run `make sim_gui`, then `python3 client.py`
+    **without GUI**: run `make sim`, then `python3 client.py`
