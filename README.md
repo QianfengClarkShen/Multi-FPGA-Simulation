@@ -18,4 +18,5 @@ This project provides a simple TCP socket interface in SystemVerilog to exchange
 
 ## how to run the demo project:
 **with GUI****: run `make sim_gui`, then `python3 client.py`
+
 **without GUI**: run `make sim`, then `python3 client.py`
