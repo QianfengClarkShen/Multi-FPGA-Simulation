@@ -17,6 +17,11 @@ This project provides a simple TCP socket interface in SystemVerilog to exchange
 3. Python >= 3.6
 
 ## how to run the demo project:
-**with GUI****: run `make sim_gui`, then `python3 client.py`
+**with GUI****:
+1. `make sim_gui`
+2. wait for Vivado simulator to launch, then press the start button to start simulation
+3. `python3 client.py`
 
-**without GUI**: run `make sim`, then `python3 client.py`
+**without GUI**:
+1. `make sim`
+2. `python3 client.py`
