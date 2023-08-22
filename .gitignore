@@ -1,0 +1,9 @@
+*
+!Makefile
+!README.txt
+!client.py
+!dut.sv
+!tb.sv
+!sim_sock.svh
+!sim_sock.cpp
+!sim.tcl
