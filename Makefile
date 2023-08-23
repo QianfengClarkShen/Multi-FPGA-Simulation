@@ -16,7 +16,7 @@ sim_gui: dpi.so compile elaborate sim.tcl
 xsim.dir/work/xsc/dpi.so: sim_sock.cpp
 	xsc --cppversion 14 sim_sock.cpp
 xsim.dir/work/work.rlx: tb.sv dut.sv sim_sock.svh
-	xvlog -svlog tb.sv -svlog dut.sv
+	xvlog --nolog --sv tb.sv dut.sv
 xsim.dir/work.tb/xsimk: dpi.so compile
 	xelab work.tb -sv_lib dpi --debug all
 
