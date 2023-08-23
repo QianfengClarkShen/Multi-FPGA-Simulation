@@ -33,7 +33,8 @@ module tb();
         .socket_dout       (dout       ),
         .socket_dout_valid (dout_valid ),
         .socket_din        ({din1,din0}),
-        .socket_din_valid  (din_valid  )
+        .socket_din_valid  (din_valid  ),
+        .socket_din_ready  (1'b1       )
     );
 
     simple_adder DUT(.*);
