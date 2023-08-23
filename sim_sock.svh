@@ -41,7 +41,8 @@ module socket_server_wrapper # (
     input logic [DWIDTH_OUT-1:0] socket_dout,
     input logic socket_dout_valid,
     output logic [DWIDTH_IN-1:0] socket_din,
-    output logic socket_din_valid
+    output logic socket_din_valid,
+    input logic socket_din_ready
 );
     localparam int DOUT_RDUP = (DWIDTH_OUT-1)/8*8+8;
     localparam int DIN_RDUP = (DWIDTH_IN-1)/8*8+8;
@@ -65,7 +66,10 @@ module socket_server_wrapper # (
         forever begin
             @(posedge clk);
             if (rst) continue;
-            rdy_return = sim_data_ready(channel);
+            if (socket_din_ready)
+                rdy_return = sim_data_ready(channel);
+            else
+                rdy_return = 0;
             if (rdy_return < 0) begin
                 $error("Error: cannot check socket status");
                 $finish;
