@@ -14,15 +14,23 @@ module tb();
     logic [31:0] din0, din1;
     logic [31:0] dout;
     logic din_valid, dout_valid;
+    int cnt;
 
     initial begin
         rst = 1'b1;
         #100ns;
         @(posedge clk);
         rst = 1'b0;
-        wait(dout_valid === 1'b1);
+        wait(cnt == 3);
         #100ns;
         $finish;
+    end
+
+    always_ff @( posedge clk) begin
+        if (rst)
+            cnt <= 0;
+        else if (dout_valid)
+            cnt <= cnt + 1'b1;
     end
 
     socket_server_wrapper #(

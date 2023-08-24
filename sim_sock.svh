@@ -16,6 +16,8 @@ import "DPI-C" function chandle sim_init(int ip_addr, int port, int t);
 
 import "DPI-C" function void sim_close(chandle h);
 
+import "DPI-C" function int sim_keep_alive(chandle h);
+
 import "DPI-C" function int sim_write(input chandle h, input byte ptr[`MAX_BUF_DEPTH-1:0], input int bytes);
 
 import "DPI-C" function int sim_data_ready(chandle h);
@@ -33,6 +35,7 @@ import "DPI-C" function void sim_usleep(int useconds);
 module socket_server_wrapper # (
     parameter int IP_ADDR = 32'h0100007f,
     parameter int PORT = 15000,
+    parameter int PAUSE_TIMEOUT_CYCLE = 1000,
     parameter int DWIDTH_IN = 32,
     parameter int DWIDTH_OUT = 32
 ) (
@@ -56,6 +59,9 @@ module socket_server_wrapper # (
     logic [DIN_RDUP-1:0] din_int;
     logic [DOUT_RDUP-1:0] dout_int;
 
+    logic pause;
+    int timeout_cnt;
+
     initial begin
         //sim_init(ip_addr, port, type) type 0 = tcp server, type 1 = tcp client
         channel = sim_init(IP_ADDR,PORT,0);
@@ -63,22 +69,39 @@ module socket_server_wrapper # (
             $error("Error: socket init failed");
             $finish;
         end
+        timeout_cnt = 0;
         forever begin
             @(posedge clk);
-            if (rst) continue;
-            if (socket_din_ready)
-                rdy_return = sim_data_ready(channel);
-            else
-                rdy_return = 0;
-            if (rdy_return < 0) begin
-                $error("Error: cannot check socket status");
+            if (rst) begin
+                timeout_cnt = 0;
+                continue;
+            end
+            if (sim_keep_alive(channel)) begin
+                $error("Error: cannot keep the socket alive");
                 $finish;
             end
+            if (socket_din_ready) begin
+                if (!pause)
+                    rdy_return = sim_data_ready(channel);
+                else begin
+                    for (;;) begin
+                        rdy_return = sim_data_ready(channel);
+                        if (rdy_return > 0)
+                            break;
+                        sim_usleep(1000);
+                    end
+                end
+            end
+            else
+                rdy_return = 0;
+            if (rdy_return > 0) begin
+                timeout_cnt = 0;
+                in_return = sim_read(channel, in_buf, DIN_RDUP/8);
+            end
             else begin
-                if (rdy_return > 0)
-                    in_return = sim_read(channel, in_buf, DIN_RDUP/8);
-                else
-                    in_return = 0;
+                if (timeout_cnt != PAUSE_TIMEOUT_CYCLE)
+                    timeout_cnt = timeout_cnt + 1;
+                in_return = 0;
             end
             if (in_return < 0 || out_return < 0) begin
                 $error("Error: socket error detected");
@@ -111,5 +134,6 @@ module socket_server_wrapper # (
         end
     end
 
+    assign pause = timeout_cnt == PAUSE_TIMEOUT_CYCLE;
     assign dout_int = socket_dout[DWIDTH_OUT-1:0];
 endmodule
