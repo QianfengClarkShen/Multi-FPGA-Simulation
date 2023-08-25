@@ -16,12 +16,19 @@ module tb();
     logic din_valid, dout_valid;
     int cnt;
 
+    //socket control
+    logic socket_nb_condition;
+    logic socket_stop;
+    logic [31:0] socket_nb_timeout;
+
     initial begin
         rst = 1'b1;
+        socket_stop = 1'b0;
         #100ns;
         @(posedge clk);
         rst = 1'b0;
         wait(cnt == 3);
+        socket_stop = 1'b1;
         #100ns;
         $finish;
     end
@@ -47,8 +54,11 @@ module tb();
 
     simple_adder DUT(.*);
 
+    assign socket_nb_condition = din_valid || dout_valid;
+    assign socket_nb_timeout = 32'd200; //make the socket blocking after inactive for 200 cycles
+
     initial begin
         clk = 1'b0;
-        forever #(1us/`FREQ) clk = ~ clk;
+        forever #(1us/(`FREQ*2)) clk = ~ clk;
     end
 endmodule

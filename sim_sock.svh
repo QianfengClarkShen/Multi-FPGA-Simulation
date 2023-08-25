@@ -35,12 +35,16 @@ import "DPI-C" function void sim_usleep(int useconds);
 module socket_server_wrapper # (
     parameter int IP_ADDR = 32'h0100007f,
     parameter int PORT = 15000,
-    parameter int PAUSE_TIMEOUT_CYCLE = 1000,
     parameter int DWIDTH_IN = 32,
     parameter int DWIDTH_OUT = 32
 ) (
     input logic clk,
     input logic rst,
+//control
+    input logic socket_nb_condition,
+    input logic socket_stop,
+    input logic [31:0] socket_nb_timeout,
+//data
     input logic [DWIDTH_OUT-1:0] socket_dout,
     input logic socket_dout_valid,
     output logic [DWIDTH_IN-1:0] socket_din,
@@ -59,8 +63,8 @@ module socket_server_wrapper # (
     logic [DIN_RDUP-1:0] din_int;
     logic [DOUT_RDUP-1:0] dout_int;
 
-    logic pause;
-    int timeout_cnt;
+    logic socket_block;
+    logic [31:0] socket_block_cnt;
 
     initial begin
         //sim_init(ip_addr, port, type) type 0 = tcp server, type 1 = tcp client
@@ -69,19 +73,18 @@ module socket_server_wrapper # (
             $error("Error: socket init failed");
             $finish;
         end
-        timeout_cnt = 0;
         forever begin
             @(posedge clk);
-            if (rst) begin
-                timeout_cnt = 0;
+            if (socket_stop === 1'b1)
                 continue;
-            end
+            if (rst)
+                continue;
             if (sim_keep_alive(channel)) begin
                 $error("Error: cannot keep the socket alive");
                 $finish;
             end
             if (socket_din_ready) begin
-                if (!pause)
+                if (!socket_block)
                     rdy_return = sim_data_ready(channel);
                 else begin
                     for (;;) begin
@@ -94,15 +97,10 @@ module socket_server_wrapper # (
             end
             else
                 rdy_return = 0;
-            if (rdy_return > 0) begin
-                timeout_cnt = 0;
+            if (rdy_return > 0)
                 in_return = sim_read(channel, in_buf, DIN_RDUP/8);
-            end
-            else begin
-                if (timeout_cnt != PAUSE_TIMEOUT_CYCLE)
-                    timeout_cnt = timeout_cnt + 1;
+            else
                 in_return = 0;
-            end
             if (in_return < 0 || out_return < 0) begin
                 $error("Error: socket error detected");
                 $finish;
@@ -113,13 +111,24 @@ module socket_server_wrapper # (
         sim_close(channel);
     end
 
+    always_ff @(posedge clk) begin
+        if (rst)
+            socket_block_cnt <= 32'b0;
+        else if (socket_nb_condition)
+            socket_block_cnt <= 32'b0;
+        else if (socket_block_cnt != socket_nb_timeout)
+            socket_block_cnt <= socket_block_cnt + 1'b1;
+    end
+    assign socket_block = socket_block_cnt == socket_nb_timeout && !socket_nb_condition;
+
     always_ff @(posedge clk) begin : input_block
         if (rst === 1'b1 || channel == null) begin
             din_int <= {DIN_RDUP{1'b0}};
             socket_din_valid <= 1'b0;
         end
         else begin
-            din_int <= {>>{in_buf[DIN_RDUP/8-1:0]}};
+            if (in_return == DIN_RDUP/8)
+                din_int <= {>>{in_buf[DIN_RDUP/8-1:0]}};
             socket_din_valid <= in_return == DIN_RDUP/8;
         end
     end
@@ -133,7 +142,5 @@ module socket_server_wrapper # (
             end
         end
     end
-
-    assign pause = timeout_cnt == PAUSE_TIMEOUT_CYCLE;
     assign dout_int = socket_dout[DWIDTH_OUT-1:0];
 endmodule
